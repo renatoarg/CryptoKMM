@@ -1,7 +1,8 @@
 package com.gmail.renatoarg.cryptokmm.data.repository
 
+import com.gmail.renatoarg.cryptokmm.data.mapper.toDomain
 import com.gmail.renatoarg.cryptokmm.data.remote.CryptoRemoteDatasource
-import com.gmail.renatoarg.cryptokmm.data.remote.dto.CryptoCoinDto
+import com.gmail.renatoarg.cryptokmm.domain.model.CryptoCoin
 import com.gmail.renatoarg.cryptokmm.domain.repository.CryptoRepository
 
 /**
@@ -13,6 +14,6 @@ internal class CryptoRepositoryImpl(
 
     override fun getCryptoListFromRemote() = remoteDatasource.getCryptoImageUrls()
 
-    override suspend fun fetchCryptoPrices(): List<CryptoCoinDto> =
-        remoteDatasource.fetchCryptoPrices()
+    override suspend fun fetchCryptoPrices(): List<CryptoCoin> =
+        remoteDatasource.fetchCryptoPrices().toDomain()
 }
