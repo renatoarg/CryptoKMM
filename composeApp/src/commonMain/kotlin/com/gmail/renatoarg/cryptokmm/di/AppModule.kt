@@ -1,5 +1,7 @@
 package com.gmail.renatoarg.cryptokmm.di
 
+import com.gmail.renatoarg.cryptokmm.config.getApiKey
+import com.gmail.renatoarg.cryptokmm.config.isDebug
 import com.gmail.renatoarg.cryptokmm.data.remote.CryptoRemoteDatasource
 import com.gmail.renatoarg.cryptokmm.data.remote.createHttpClient
 import com.gmail.renatoarg.cryptokmm.data.repository.CryptoRepositoryImpl
@@ -12,10 +14,15 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
+/** Main Koin dependency injection module. */
 val appModule = module {
-    single { createHttpClient() }
+    // Network — API key from gradle.properties, logging per build type
+    single { createHttpClient(apiKey = getApiKey(), isDebug = isDebug()) }
     singleOf(::CryptoRemoteDatasource)
+    // Data
     singleOf(::CryptoRepositoryImpl) bind CryptoRepository::class
+    // Domain
     factoryOf(::GetCryptoListUseCase)
+    // Presentation
     viewModelOf(::CryptoListViewModel)
 }

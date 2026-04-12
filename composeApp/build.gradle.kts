@@ -52,6 +52,7 @@ kotlin {
             // Ktor
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.logging)
             implementation(libs.ktor.serialization.kotlinx.json)
             // Kotlinx Serialization
             implementation(libs.kotlinx.serialization.json)
@@ -64,6 +65,10 @@ kotlin {
             implementation(libs.kotlin.test)
             // Koin
             implementation(libs.koin.test)
+            // Ktor
+            implementation(libs.ktor.client.mock)
+            // Coroutines
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
@@ -78,6 +83,11 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        // CoinGecko API key from gradle.properties
+        buildConfigField("String", "API_KEY", "\"${findProperty("API_KEY") ?: ""}\"")
+    }
+    buildFeatures {
+        buildConfig = true
     }
     packaging {
         resources {
@@ -90,8 +100,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
