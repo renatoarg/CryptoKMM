@@ -1,6 +1,8 @@
 package com.gmail.renatoarg.cryptokmm.data.remote
 
-internal class CryptoRemoteDatasource {
+import io.ktor.client.HttpClient
+
+internal class CryptoRemoteDatasource(private val httpClient: HttpClient) {
 
     fun getCryptoImageUrls(): String {
         return """

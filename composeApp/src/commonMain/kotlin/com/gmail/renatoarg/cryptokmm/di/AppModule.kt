@@ -1,6 +1,7 @@
 package com.gmail.renatoarg.cryptokmm.di
 
 import com.gmail.renatoarg.cryptokmm.data.remote.CryptoRemoteDatasource
+import com.gmail.renatoarg.cryptokmm.data.remote.createHttpClient
 import com.gmail.renatoarg.cryptokmm.data.repository.CryptoRepositoryImpl
 import com.gmail.renatoarg.cryptokmm.domain.repository.CryptoRepository
 import com.gmail.renatoarg.cryptokmm.domain.usecase.GetCryptoListUseCase
@@ -12,6 +13,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val appModule = module {
+    single { createHttpClient() }
     singleOf(::CryptoRemoteDatasource)
     singleOf(::CryptoRepositoryImpl) bind CryptoRepository::class
     factoryOf(::GetCryptoListUseCase)
