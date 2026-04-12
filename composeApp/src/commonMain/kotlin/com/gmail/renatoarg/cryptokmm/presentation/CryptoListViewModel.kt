@@ -1,14 +1,18 @@
 package com.gmail.renatoarg.cryptokmm.presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.gmail.renatoarg.cryptokmm.domain.usecase.GetCryptoListUseCase
+import kotlinx.coroutines.launch
 
 class CryptoListViewModel(
-    useCase: GetCryptoListUseCase
+    private val useCase: GetCryptoListUseCase
 ) : ViewModel() {
 
     init {
-        println("-=> viewModel: ${useCase.invoke()}")
+        viewModelScope.launch {
+            useCase()
+        }
     }
 
 }

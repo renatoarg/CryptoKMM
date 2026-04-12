@@ -6,8 +6,8 @@ class GetCryptoListUseCase(
     private val repository: CryptoRepository
 ) {
 
-    operator fun invoke() {
-        println(repository.getCryptoListFromRemote())
+    suspend operator fun invoke() {
+        println("-=> ${repository.fetchCryptoPrices()}")
     }
 
 }

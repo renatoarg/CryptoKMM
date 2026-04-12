@@ -12,8 +12,6 @@ internal class CryptoRepositoryImpl(
     private val remoteDatasource: CryptoRemoteDatasource,
 ) : CryptoRepository {
 
-    override fun getCryptoListFromRemote() = remoteDatasource.getCryptoImageUrls()
-
     override suspend fun fetchCryptoPrices(): List<CryptoCoin> =
         remoteDatasource.fetchCryptoPrices().toDomain()
 }
