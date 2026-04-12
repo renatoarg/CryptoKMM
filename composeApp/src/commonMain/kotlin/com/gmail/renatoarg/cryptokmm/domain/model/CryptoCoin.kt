@@ -1,5 +1,8 @@
 package com.gmail.renatoarg.cryptokmm.domain.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class CryptoCoin(
     val id: String,
     val symbol: String,
