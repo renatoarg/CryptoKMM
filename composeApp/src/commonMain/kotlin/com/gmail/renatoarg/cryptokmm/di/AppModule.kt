@@ -2,6 +2,7 @@ package com.gmail.renatoarg.cryptokmm.di
 
 import com.gmail.renatoarg.cryptokmm.config.getApiKey
 import com.gmail.renatoarg.cryptokmm.config.isDebug
+import com.gmail.renatoarg.cryptokmm.data.local.CryptoLocalDatasource
 import com.gmail.renatoarg.cryptokmm.data.remote.CryptoRemoteDatasource
 import com.gmail.renatoarg.cryptokmm.data.remote.createHttpClient
 import com.gmail.renatoarg.cryptokmm.data.repository.CryptoRepositoryImpl
@@ -20,6 +21,7 @@ val appModule = module {
     single { createHttpClient(apiKey = getApiKey(), isDebug = isDebug()) }
     singleOf(::CryptoRemoteDatasource)
     // Data
+    singleOf(::CryptoLocalDatasource)
     singleOf(::CryptoRepositoryImpl) bind CryptoRepository::class
     // Domain
     factoryOf(::GetCryptoListUseCase)
