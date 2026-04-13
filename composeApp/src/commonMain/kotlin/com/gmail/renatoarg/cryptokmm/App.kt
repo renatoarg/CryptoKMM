@@ -4,18 +4,23 @@ import kotlin.math.pow
 import kotlin.math.round
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -35,21 +40,52 @@ private val NegativeChangeColor = Color(0xFFF44336)
 @Composable
 fun App() {
     val viewModel = koinViewModel<CryptoListViewModel>()
-    val cryptoList by viewModel.cryptoList.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val isConnected by viewModel.isConnected.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(isConnected) {
+        if (!isConnected) {
+            snackbarHostState.showSnackbar(
+                message = "No Internet connection",
+                duration = SnackbarDuration.Indefinite,
+            )
+        } else {
+            snackbarHostState.currentSnackbarData?.dismiss()
+        }
+    }
 
     MaterialTheme {
-        LazyColumn(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .safeContentPadding()
-                .fillMaxSize(),
-        ) {
-            items(
-                items = cryptoList,
-                key = { it.id },
-                contentType = { "crypto_row" },
-            ) { coin ->
-                CryptoRow(coin)
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { innerPadding ->
+            when {
+                !uiState.isLoading && uiState.cryptoList.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("Not possible to load data")
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .background(MaterialTheme.colorScheme.background)
+                            .fillMaxSize(),
+                    ) {
+                        items(
+                            items = uiState.cryptoList,
+                            key = { it.id },
+                            contentType = { "crypto_row" },
+                        ) { coin ->
+                            CryptoRow(coin)
+                        }
+                    }
+                }
             }
         }
     }

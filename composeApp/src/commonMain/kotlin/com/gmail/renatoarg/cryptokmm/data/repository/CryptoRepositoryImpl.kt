@@ -17,12 +17,13 @@ internal class CryptoRepositoryImpl(
     private val localDatasource: CryptoLocalDatasource,
 ) : CryptoRepository {
 
-    override suspend fun fetchCryptoPrices(): List<CryptoCoin> =
-        try {
-            val dtos = remoteDatasource.fetchCryptoPrices()
-            runCatching { localDatasource.replaceAll(dtos.toEntity()) }
-            dtos.toDomain()
-        } catch (_: Exception) {
-            localDatasource.getAll().toDomainFromEntity()
-        }
+    override suspend fun getCachedCryptoPrices(): List<CryptoCoin> =
+        runCatching { localDatasource.getAll().toDomainFromEntity() }
+            .getOrDefault(emptyList())
+
+    override suspend fun refreshCryptoPrices(): List<CryptoCoin> {
+        val dtos = remoteDatasource.fetchCryptoPrices()
+        runCatching { localDatasource.replaceAll(dtos.toEntity()) }
+        return dtos.toDomain()
+    }
 }

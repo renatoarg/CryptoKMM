@@ -19,9 +19,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/** Unit tests for [CryptoRepositoryImpl] covering remote delegation and local cache logic. */
+/** Unit tests for [CryptoRepositoryImpl] covering cache reads and remote refresh. */
 class CryptoRepositoryImplTest {
 
     private val sampleJson = """
@@ -70,13 +71,41 @@ class CryptoRepositoryImplTest {
         return CryptoRepositoryImpl(remote, local) to dao
     }
 
-    // region Remote success
+    // region getCachedCryptoPrices
 
     @Test
-    fun fetchCryptoPrices_remoteSuccess_returnsMappedData() = runTest {
+    fun getCachedCryptoPrices_returnsCachedData() = runTest {
+        val dao = FakeCryptoCoinDao()
+        dao.insertAll(
+            listOf(CryptoCoinEntity("bitcoin", "btc", "Bitcoin", "img", 65000.0, 1_200_000_000_000, 1, -0.5))
+        )
+        val (repository, _) = createRepository(createSuccessClient("[]"), dao)
+
+        val result = repository.getCachedCryptoPrices()
+
+        assertEquals(1, result.size)
+        assertEquals("bitcoin", result[0].id)
+        assertEquals(65000.0, result[0].currentPrice)
+    }
+
+    @Test
+    fun getCachedCryptoPrices_emptyCache_returnsEmptyList() = runTest {
+        val (repository, _) = createRepository(createSuccessClient("[]"))
+
+        val result = repository.getCachedCryptoPrices()
+
+        assertTrue(result.isEmpty())
+    }
+
+    // endregion
+
+    // region refreshCryptoPrices — success
+
+    @Test
+    fun refreshCryptoPrices_remoteSuccess_returnsMappedData() = runTest {
         val (repository, _) = createRepository(createSuccessClient(sampleJson))
 
-        val result = repository.fetchCryptoPrices()
+        val result = repository.refreshCryptoPrices()
 
         assertEquals(1, result.size)
         assertEquals("bitcoin", result[0].id)
@@ -85,10 +114,10 @@ class CryptoRepositoryImplTest {
     }
 
     @Test
-    fun fetchCryptoPrices_remoteSuccess_cachesDataLocally() = runTest {
+    fun refreshCryptoPrices_remoteSuccess_cachesDataLocally() = runTest {
         val (repository, dao) = createRepository(createSuccessClient(sampleJson))
 
-        repository.fetchCryptoPrices()
+        repository.refreshCryptoPrices()
 
         val cached = dao.getAll()
         assertEquals(1, cached.size)
@@ -97,14 +126,14 @@ class CryptoRepositoryImplTest {
     }
 
     @Test
-    fun fetchCryptoPrices_remoteSuccess_replacesOldCache() = runTest {
+    fun refreshCryptoPrices_remoteSuccess_replacesOldCache() = runTest {
         val dao = FakeCryptoCoinDao()
         dao.insertAll(
             listOf(CryptoCoinEntity("old", "old", "OldCoin", "img", 1.0, 100, null, null))
         )
         val (repository, _) = createRepository(createSuccessClient(sampleJson), dao)
 
-        repository.fetchCryptoPrices()
+        repository.refreshCryptoPrices()
 
         val cached = dao.getAll()
         assertEquals(1, cached.size)
@@ -112,67 +141,37 @@ class CryptoRepositoryImplTest {
     }
 
     @Test
-    fun fetchCryptoPrices_emptyRemoteResponse() = runTest {
+    fun refreshCryptoPrices_emptyRemoteResponse() = runTest {
         val (repository, _) = createRepository(createSuccessClient("[]"))
 
-        val result = repository.fetchCryptoPrices()
+        val result = repository.refreshCryptoPrices()
 
         assertTrue(result.isEmpty())
     }
 
     // endregion
 
-    // region Remote failure — local fallback
+    // region refreshCryptoPrices — failure
 
     @Test
-    fun fetchCryptoPrices_remoteFailure_returnsCachedData() = runTest {
-        val dao = FakeCryptoCoinDao()
-        dao.insertAll(
-            listOf(CryptoCoinEntity("bitcoin", "btc", "Bitcoin", "img", 65000.0, 1_200_000_000_000, 1, -0.5))
-        )
-        val (repository, _) = createRepository(createFailingClient(), dao)
-
-        val result = repository.fetchCryptoPrices()
-
-        assertEquals(1, result.size)
-        assertEquals("bitcoin", result[0].id)
-        assertEquals(65000.0, result[0].currentPrice)
-    }
-
-    @Test
-    fun fetchCryptoPrices_remoteFailure_emptyCache_returnsEmptyList() = runTest {
+    fun refreshCryptoPrices_remoteFailure_throwsException() = runTest {
         val (repository, _) = createRepository(createFailingClient())
 
-        val result = repository.fetchCryptoPrices()
-
-        assertTrue(result.isEmpty())
-    }
-
-    @Test
-    fun fetchCryptoPrices_remoteFailure_cacheIsNotModified() = runTest {
-        val dao = FakeCryptoCoinDao()
-        dao.insertAll(
-            listOf(CryptoCoinEntity("bitcoin", "btc", "Bitcoin", "img", 65000.0, 1_200_000_000_000, 1, -0.5))
-        )
-        val (repository, _) = createRepository(createFailingClient(), dao)
-
-        repository.fetchCryptoPrices()
-
-        val cached = dao.getAll()
-        assertEquals(1, cached.size)
-        assertEquals(65000.0, cached[0].currentPrice)
+        assertFailsWith<Exception> {
+            repository.refreshCryptoPrices()
+        }
     }
 
     // endregion
 
-    // region Local save failure
+    // region refreshCryptoPrices — local save failure
 
     @Test
-    fun fetchCryptoPrices_remoteSuccess_localSaveFails_stillReturnsRemoteData() = runTest {
+    fun refreshCryptoPrices_remoteSuccess_localSaveFails_stillReturnsData() = runTest {
         val dao = FakeCryptoCoinDao().apply { shouldFailOnWrite = true }
         val (repository, _) = createRepository(createSuccessClient(sampleJson), dao)
 
-        val result = repository.fetchCryptoPrices()
+        val result = repository.refreshCryptoPrices()
 
         assertEquals(1, result.size)
         assertEquals("bitcoin", result[0].id)

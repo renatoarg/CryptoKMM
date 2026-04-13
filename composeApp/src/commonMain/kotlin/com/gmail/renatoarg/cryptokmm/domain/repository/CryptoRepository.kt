@@ -5,6 +5,10 @@ import com.gmail.renatoarg.cryptokmm.domain.model.CryptoCoin
 /** Repository contract for cryptocurrency data operations. */
 interface CryptoRepository {
 
-    /** Fetches live cryptocurrency market prices. */
-    suspend fun fetchCryptoPrices(): List<CryptoCoin>
+    /** Returns locally cached cryptocurrency prices, or an empty list if the cache is empty. */
+    suspend fun getCachedCryptoPrices(): List<CryptoCoin>
+
+    /** Fetches live prices from the remote API, saves them to cache, and returns them.
+     *  Throws on network failure. */
+    suspend fun refreshCryptoPrices(): List<CryptoCoin>
 }

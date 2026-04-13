@@ -7,8 +7,7 @@ class GetCryptoListUseCase(
     private val repository: CryptoRepository
 ) {
 
-    suspend operator fun invoke(): List<CryptoCoin> {
-        return repository.fetchCryptoPrices()
-    }
+    suspend fun cached(): List<CryptoCoin> = repository.getCachedCryptoPrices()
 
+    suspend fun refresh(): List<CryptoCoin> = repository.refreshCryptoPrices()
 }
